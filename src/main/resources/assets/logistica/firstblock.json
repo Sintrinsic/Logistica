@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern":
+  [
+    "xxa",
+    "x x",
+    "xxx"
+  ],
+  "key":
+  {
+    "x":
+    {
+      "type": "forge:ore_dict",
+      "ore": "gemDiamond"
+    },
+    "a":
+    {
+      "type": "forge:ore_dict",
+      "ore": "gemEmerald"
+    }
+  },
+  "result":
+  {
+    "item": "logistica:first_block",
+    "count": 9,
+    "data": 2
+  }
+}
