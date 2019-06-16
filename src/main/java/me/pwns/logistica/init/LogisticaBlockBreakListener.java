@@ -9,8 +9,7 @@ public class LogisticaBlockBreakListener {
 
     @SubscribeEvent
     public static void blockDestroyed(BlockEvent.BreakEvent event) {
-        String state = event.getState().toString();
-        System.out.println("Block destroyed" + );
+        System.out.println("Block destroyed");
     }
 
 }
