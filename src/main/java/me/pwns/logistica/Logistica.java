@@ -1,7 +1,6 @@
 package me.pwns.logistica;
 
 import net.minecraft.block.Block;
-//import net.minecraft.block.Blocks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -17,7 +16,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.stream.Collectors;
-import java.lang.ref.Reference;
+
+//import net.minecraft.block.Blocks;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod("logistica")
@@ -38,6 +38,7 @@ public class Logistica
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+
     }
 
     private void setup(final FMLCommonSetupEvent event)
