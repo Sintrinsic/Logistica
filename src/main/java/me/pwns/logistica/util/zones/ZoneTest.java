@@ -19,7 +19,7 @@ public class ZoneTest {
         if (world.isRemote) {
             return;
         }
-
+        event.getState();
         System.out.println("Received destroyblockevent.");
 
         BlockPos position = event.getPos();
