@@ -35,7 +35,6 @@ public class ZoneTest {
         if (event.getEntityLiving().world.isRemote) {
             return;
         }
-
         String name = event.getPlayer().getName().getString();
         String testString = "WOW! Player " + name + " has entered the zone.";
         System.out.println(testString);
