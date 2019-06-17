@@ -64,5 +64,21 @@ public class BlockGroupZone implements Zone {
         return true;
     }
 
+    public boolean addBlock(BlockPos block) {
+        if (blockList.contains(block)) {
+            return false;
+        }
+        blockList.add(block);
+        return true;
+    }
+
+    public boolean removeBlock(BlockPos block) {
+        if (!blockList.contains(block)) {
+            return false;
+        }
+        blockList.remove(block);
+        return true;
+    }
+
 
 }
