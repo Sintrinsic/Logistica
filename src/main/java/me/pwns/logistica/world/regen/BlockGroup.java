@@ -81,11 +81,15 @@ public class BlockGroup {
     public void restore() {
 
         // First, iterate over the blockStateList, and place the block back in the world.
+        blockStateList.forEach((pos, state) -> state.restoreState());
+        hasBeenRestored = true; // Currently not used, included for future proofing.
+        /* Old and dumb. Retaining temporarily in case new hotness is not so hot.
         for(Map.Entry<BlockPos, SavedBlockState> entry: blockStateList.entrySet()) {
             SavedBlockState savedState = entry.getValue();
             savedState.getWorld().setBlockState(savedState.getPos(), savedState.getState());
-            hasBeenRestored = true; // Currently not used, included for future proofing.
-        };
+
+        };*/
+
 
         // Now we need to clean up WorldRegenManager of both restored blocks and their neighbors.
         Set<BlockPos> allBlocksPos = blockStateList.keySet();
