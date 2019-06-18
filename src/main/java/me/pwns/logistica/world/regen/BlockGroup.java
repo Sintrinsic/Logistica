@@ -87,7 +87,6 @@ public class BlockGroup {
         for(Map.Entry<BlockPos, SavedBlockState> entry: blockStateList.entrySet()) {
             SavedBlockState savedState = entry.getValue();
             savedState.getWorld().setBlockState(savedState.getPos(), savedState.getState());
-
         };*/
 
 

@@ -16,18 +16,33 @@ public class SavedBlockState {
         this.pos = pos;
     }
 
+    /**
+     * This is used to restore this saved block state to the world.
+     */
     public void restoreState() {
         world.setBlockState(pos, state);
     }
 
+    /**
+     * Helper method to get the world this block was in.
+     * @return World
+     */
     public World getWorld(){
         return world;
     }
 
+    /**
+     * Helper method to get the actual state.
+     * @return BlockState
+     */
     public BlockState getState(){
         return state;
     }
 
+    /**
+     * Helper method to get the block position
+     * @return BlockPos
+     */
     public BlockPos getPos(){
         return pos;
     }
