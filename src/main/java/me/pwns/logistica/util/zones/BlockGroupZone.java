@@ -15,8 +15,10 @@ public class BlockGroupZone implements Zone {
     private Set<BlockPos> blockList;
     private Set<PlayerEntity> players;
     private World world;
+    private String name;
 
-    public BlockGroupZone(Set<BlockPos> blockSet, World world) {
+    public BlockGroupZone(Set<BlockPos> blockSet, World world, String name) {
+        this.name = name;
         this.world = world;
         blockList = blockSet;
         players = new HashSet<>();
@@ -78,6 +80,10 @@ public class BlockGroupZone implements Zone {
         }
         blockList.remove(block);
         return true;
+    }
+
+    public String getName() {
+        return name;
     }
 
 

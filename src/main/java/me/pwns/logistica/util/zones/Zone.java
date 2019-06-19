@@ -19,4 +19,6 @@ public interface Zone {
 
     boolean removePlayer(PlayerEntity player);
 
+    String getName();
+
 }

@@ -35,21 +35,17 @@ public class ZoneManager {
                 zone.addPlayer(event.getEntityPlayer());
                 PlayerZoneEvent zoneEvent = new PlayerZoneEvent(event.getEntityPlayer(), zone, ZoneEventType.ENTERING);
                 MinecraftForge.EVENT_BUS.post(zoneEvent);
-                System.out.println("Firing enter zone event.");
 
             } else if (fromPosInside && !toPosInside) {
                 zone.removePlayer(event.getEntityPlayer());
                 PlayerZoneEvent zoneEvent = new PlayerZoneEvent(event.getEntityPlayer(), zone, ZoneEventType.EXITING);
                 MinecraftForge.EVENT_BUS.post(zoneEvent);
-                System.out.println("Firing exit zone event.");
             }
         }
 
     }
 
     public static void addZone(Zone zone) {
-        System.out.println("Adding zone in addZone method.");
-
         zones.add(zone);
     }
 

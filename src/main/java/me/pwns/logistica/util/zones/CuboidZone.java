@@ -76,4 +76,9 @@ public class CuboidZone implements Zone {
         players.remove(player);
         return true;
     }
+
+    @Override
+    public String getName() {
+        return null;
+    }
 }

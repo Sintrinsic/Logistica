@@ -6,10 +6,12 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Set;
 
 /**
  * TODO complete javadoc
+ * TODO Add blockgroup joining. Currently creating a bunch of isolated groups.
  */
 @Mod.EventBusSubscriber
 public class WorldRegenManager {
@@ -27,19 +29,21 @@ public class WorldRegenManager {
         SavedBlockState block = new SavedBlockState(world, event.getState(), event.getPos());
         BlockGroup group;
 
-        if (destroyedBlockGroup.containsKey(event.getPos()) ) {
-            destroyedBlockGroup.get(event.getPos()).addBlock(block);
-            // TODO eventually add join logic here
+        if (destroyedBlockGroup.containsKey(event.getPos())) {
+            group = destroyedBlockGroup.get(event.getPos());
+            group.addBlock(block);
         } else {
             group = new BlockGroup(block);
-            destroyedBlockGroup.put(event.getPos(), group);
-            destroyedBlockGroup.put(event.getPos().up(), group);
-            destroyedBlockGroup.put(event.getPos().down(), group);
-            destroyedBlockGroup.put(event.getPos().north(), group);
-            destroyedBlockGroup.put(event.getPos().east(), group);
-            destroyedBlockGroup.put(event.getPos().south(), group);
-            destroyedBlockGroup.put(event.getPos().west(), group);
         }
+
+        destroyedBlockGroup.put(event.getPos(), group);
+        destroyedBlockGroup.put(event.getPos().up(), group);
+        destroyedBlockGroup.put(event.getPos().down(), group);
+        destroyedBlockGroup.put(event.getPos().north(), group);
+        destroyedBlockGroup.put(event.getPos().east(), group);
+        destroyedBlockGroup.put(event.getPos().south(), group);
+        destroyedBlockGroup.put(event.getPos().west(), group);
+
 
     }
 

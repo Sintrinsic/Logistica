@@ -40,7 +40,6 @@ public class PlayerMovementManager {
         if (difference.length() >= 1) {
             PlayerMovedEvent movedEvent = new PlayerMovedEvent(event.player, playerLastLocations.get(event.player), currentLocation);
             MinecraftForge.EVENT_BUS.post(movedEvent);
-            System.out.println("Player moved. Fired event.");
 
             playerLastLocations.put(event.player, currentLocation);
         }
