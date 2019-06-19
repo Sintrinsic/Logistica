@@ -15,21 +15,31 @@ import java.util.*;
 public class WorldRegenManager {
     private static HashMap<BlockPos, BlockGroup> destroyedBlockGroup = new HashMap<>();
 
+    /**
+     * Main event listener for WorldRegen.
+     * @param event BlockEvent.BreakEvent
+     */
     @SubscribeEvent
     public static void blockDestroyedListener(BlockEvent.BreakEvent event) {
         if (event.getWorld().isRemote()) return;
         World world = event.getWorld().getWorld(); // TODO: Yes, it's weird. The first one makes it an IWorld. Issue?
 
         SavedBlockState block = new SavedBlockState(world, event.getState(), event.getPos());
-        BlockGroup group = new BlockGroup(block);
-        destroyedBlockGroup.put(event.getPos(), group);
-        destroyedBlockGroup.put(event.getPos().up(), group);
-        destroyedBlockGroup.put(event.getPos().down(), group);
-        destroyedBlockGroup.put(event.getPos().north(), group);
-        destroyedBlockGroup.put(event.getPos().east(), group);
-        destroyedBlockGroup.put(event.getPos().south(), group);
-        destroyedBlockGroup.put(event.getPos().west(), group);
+        BlockGroup group;
 
+        if (destroyedBlockGroup.containsKey(event.getPos()) ) {
+            destroyedBlockGroup.get(event.getPos()).addBlock(block);
+            // TODO eventually add join logic here
+        } else {
+            group = new BlockGroup(block);
+            destroyedBlockGroup.put(event.getPos(), group);
+            destroyedBlockGroup.put(event.getPos().up(), group);
+            destroyedBlockGroup.put(event.getPos().down(), group);
+            destroyedBlockGroup.put(event.getPos().north(), group);
+            destroyedBlockGroup.put(event.getPos().east(), group);
+            destroyedBlockGroup.put(event.getPos().south(), group);
+            destroyedBlockGroup.put(event.getPos().west(), group);
+        }
 
     }
 
