@@ -1,9 +1,8 @@
 package me.pwns.logistica.events;
 
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-
-import javax.vecmath.Vector3d;
 
 /**
  * Event fired when a player moves >= one block width of distance in any direction.
@@ -12,11 +11,10 @@ import javax.vecmath.Vector3d;
  * A player wiggling around in a < 1 block area will not trigger this event.
  */
 public class PlayerMovedEvent extends PlayerEvent {
-    private Vector3d fromPos;
-    private Vector3d toPos;
-    private long distance;
+    private Vec3d fromPos;
+    private Vec3d toPos;
 
-    public PlayerMovedEvent(PlayerEntity player, Vector3d from, Vector3d to) {
+    public PlayerMovedEvent(PlayerEntity player, Vec3d from, Vec3d to) {
         super(player);
         fromPos = from;
         toPos = to;
@@ -25,18 +23,14 @@ public class PlayerMovedEvent extends PlayerEvent {
     /**
      * Get the last saved position of the player. Corresponds to the ToPos property of the last time this event fired.
      */
-    public Vector3d getFromPos() {
+    public Vec3d getFromPos() {
         return fromPos;
     }
 
     /**
      * Get the current location of the player.
      */
-    public Vector3d getToPos() {
+    public Vec3d getToPos() {
         return toPos;
-    }
-
-    public long getDistance() {
-        return distance;
     }
 }

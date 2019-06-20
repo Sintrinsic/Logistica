@@ -1,9 +1,10 @@
 package me.pwns.logistica.util.zones;
 
 
+import me.pwns.logistica.events.PlayerEnterZoneEvent;
+import me.pwns.logistica.events.PlayerExitZoneEvent;
 import me.pwns.logistica.events.PlayerMovedEvent;
 import me.pwns.logistica.events.PlayerZoneEvent;
-import me.pwns.logistica.events.ZoneEventType;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -33,12 +34,12 @@ public class ZoneManager {
             // as entered (as would be the case if the zone popped up around them).
             if (toPosInside && (!fromPosInside || !zone.getPlayers().contains(event.getEntityPlayer()))) {
                 zone.addPlayer(event.getEntityPlayer());
-                PlayerZoneEvent zoneEvent = new PlayerZoneEvent(event.getEntityPlayer(), zone, ZoneEventType.ENTERING);
+                PlayerZoneEvent zoneEvent = new PlayerEnterZoneEvent(event.getEntityPlayer(), zone);
                 MinecraftForge.EVENT_BUS.post(zoneEvent);
 
             } else if (fromPosInside && !toPosInside) {
                 zone.removePlayer(event.getEntityPlayer());
-                PlayerZoneEvent zoneEvent = new PlayerZoneEvent(event.getEntityPlayer(), zone, ZoneEventType.EXITING);
+                PlayerZoneEvent zoneEvent = new PlayerExitZoneEvent(event.getEntityPlayer(), zone);
                 MinecraftForge.EVENT_BUS.post(zoneEvent);
             }
         }

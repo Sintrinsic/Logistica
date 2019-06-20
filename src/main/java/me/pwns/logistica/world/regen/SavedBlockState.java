@@ -25,25 +25,28 @@ public class SavedBlockState {
 
     /**
      * Helper method to get the world this block was in.
+     *
      * @return World
      */
-    public World getWorld(){
+    public World getWorld() {
         return world;
     }
 
     /**
      * Helper method to get the actual state.
+     *
      * @return BlockState
      */
-    public BlockState getState(){
+    public BlockState getState() {
         return state;
     }
 
     /**
      * Helper method to get the block position
+     *
      * @return BlockPos
      */
-    public BlockPos getPos(){
+    public BlockPos getPos() {
         return pos;
     }
 

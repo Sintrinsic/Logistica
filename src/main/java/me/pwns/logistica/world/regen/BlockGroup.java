@@ -1,7 +1,7 @@
 package me.pwns.logistica.world.regen;
 
-import me.pwns.logistica.events.PlayerZoneEvent;
-import me.pwns.logistica.events.ZoneEventType;
+import me.pwns.logistica.events.PlayerEnterZoneEvent;
+import me.pwns.logistica.events.PlayerExitZoneEvent;
 import me.pwns.logistica.util.time.Scheduler;
 import me.pwns.logistica.util.time.callbacks.BlockRegenCallback;
 import me.pwns.logistica.util.zones.BlockGroupZone;
@@ -12,7 +12,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-
 
 /**
  * Groups together adjacent blocks by their current BlockState (see SavedBlockState, in order to  facilitate replacing a
@@ -28,15 +27,17 @@ public class BlockGroup {
     private int occupants;
     private int regenTimeout = 100;
 
-
-    /** Constructor.
+    /**
+     * Constructor.
+     *
      * @param block this is a SavedBlockState that has World, BlockPos, and BlockState as arguments
      */
     public BlockGroup(SavedBlockState block) {
         this.world = block.getWorld(); // Although other blocks are added later, shouldn't ever be jumping worlds.
-        this.zone = new BlockGroupZone(blockStateList.keySet(), block.getWorld(), block.getState().toString());
+        this.zone = new BlockGroupZone(new HashSet<BlockPos>(blockStateList.keySet()),
+                block.getWorld(),
+                block.getState().toString());
         addBlock(block);
-
     }
 
     /**
@@ -59,7 +60,9 @@ public class BlockGroup {
         }
     }
 
-    /** Adds a block to the block list.
+    /**
+     * Adds a block to the block list.
+     *
      * @param block SavedBlockState block.
      */
     public void addBlock(SavedBlockState block) {
@@ -72,11 +75,11 @@ public class BlockGroup {
         blockNeighbors.add(block.getPos().west());
         zone.addBlock(block.getPos());
         touch();
-
     }
 
     /**
      * Helper method to determine when this BlockGroup last was entered.
+     *
      * @return this.lastTouched
      */
     public float getLastTouched() {
@@ -85,6 +88,7 @@ public class BlockGroup {
 
     /**
      * Helper method to determine if this BlockGroup currently has a player entity within its zone.
+     *
      * @return this.isOccupied
      */
     public boolean isOccupied() {
@@ -114,22 +118,18 @@ public class BlockGroup {
         WorldRegenManager.removeBlocks(allBlockPos);
     }
 
-    /**
-     * This does the bulk of the work, listening for players leaving/entering them.
-     * @param event Listens to PlayerZoneEvents for players exiting and entering zone
-     */
     @SubscribeEvent
-    public void zoneListener(PlayerZoneEvent event) {
+    public void enterZoneListener(PlayerEnterZoneEvent event) {
         if (event.getPlayer().getEntityWorld().isRemote() || event.getZone() != zone) return;
-        if (event.getEventType() == ZoneEventType.ENTERING) {
             this.touch();
             occupants++;
-        }
-        else if (event.getEventType() == ZoneEventType.EXITING) {
-            // Whenever a player leaves a zone, WorldRegenManager will start watching and look at lastTouched
-            occupants--;
-            this.touch();
-        }
     }
 
+    @SubscribeEvent
+    public void exitZoneListener(PlayerExitZoneEvent event) {
+        if (event.getPlayer().getEntityWorld().isRemote() || event.getZone() != zone) return;
+        occupants--;
+        this.touch();
+
+    }
 }

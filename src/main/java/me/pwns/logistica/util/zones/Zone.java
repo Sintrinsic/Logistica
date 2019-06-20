@@ -1,24 +1,44 @@
 package me.pwns.logistica.util.zones;
 
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
-import javax.vecmath.Vector3d;
 import java.util.Set;
 
 /**
- * Base class for zones, which define arbitrary areas within the world that track player occupancy and potentially
- * other properties.
+ * All the fun mandatory bits that make up a zone.
  */
-public interface Zone {
-    boolean isInside(Vector3d position, World world);
+public abstract class Zone {
+    protected Set<PlayerEntity> players;
+    protected World world;
+    protected String name;
 
-    Set<PlayerEntity> getPlayers();
+    /**
+     * @param position The 3d position in the world to check.
+     * @param world    The world that corresponds to the above position.
+     * @return True if the position is inside the zone. False if not.
+     */
+    public abstract boolean isInside(Vec3d position, World world);
 
-    boolean addPlayer(PlayerEntity player);
+    /**
+     * @return A list of players currently within this zone.
+     */
+    public Set<PlayerEntity> getPlayers() {
+        return players;
+    }
 
-    boolean removePlayer(PlayerEntity player);
+    public boolean addPlayer(PlayerEntity player) {
+        return players.add(player);
+    }
 
-    String getName();
+    public boolean removePlayer(PlayerEntity player) {
+        return players.remove(player);
+    }
+
+    public String getName() {
+        return name;
+    }
+
 
 }

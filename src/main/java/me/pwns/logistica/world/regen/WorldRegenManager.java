@@ -19,6 +19,7 @@ public class WorldRegenManager {
 
     /**
      * Main event listener for WorldRegen.
+     *
      * @param event BlockEvent.BreakEvent
      */
     @SubscribeEvent
@@ -47,7 +48,7 @@ public class WorldRegenManager {
 
     }
 
-    public static void removeBlocks(Set<BlockPos> savedBlocks){
+    public static void removeBlocks(Set<BlockPos> savedBlocks) {
         destroyedBlockGroup.keySet().removeAll(savedBlocks);
     }
 

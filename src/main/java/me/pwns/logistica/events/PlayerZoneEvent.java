@@ -8,16 +8,14 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 /**
  * Event fired with a player enters or exits a Zone.
  */
-public class PlayerZoneEvent extends PlayerEvent {
+public abstract class PlayerZoneEvent extends PlayerEvent {
     private PlayerEntity player;
     private Zone zone;
-    private ZoneEventType eventType;
 
-    public PlayerZoneEvent(PlayerEntity player, Zone zone, ZoneEventType eventType) {
+    public PlayerZoneEvent(PlayerEntity player, Zone zone) {
         super(player);
         this.player = player;
         this.zone = zone;
-        this.eventType = eventType;
     }
 
     public PlayerEntity getPlayer() {
@@ -26,12 +24,5 @@ public class PlayerZoneEvent extends PlayerEvent {
 
     public Zone getZone() {
         return zone;
-    }
-
-    /**
-     * @return The type of zone change for the event: Enter or Exit.
-     */
-    public ZoneEventType getEventType() {
-        return eventType;
     }
 }

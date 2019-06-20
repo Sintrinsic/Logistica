@@ -1,47 +1,51 @@
 package me.pwns.logistica.util.zones;
 
 import me.pwns.logistica.events.PlayerMovedEvent;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.apache.commons.lang3.mutable.MutableInt;
 
-import javax.vecmath.Vector3d;
 import java.util.HashMap;
 
 @Mod.EventBusSubscriber
 public class PlayerMovementManager {
-    private static HashMap<PlayerEntity, Vector3d> playerLastLocations = new HashMap<>();
-    private static int tick = 0;
+    private static HashMap<String, Vec3d> playerLastLocations = new HashMap<>();
+    private static HashMap<String, MutableInt> playerTicks = new HashMap<>();
 
     @SubscribeEvent
     public static void onUpdate(TickEvent.PlayerTickEvent event) {
         if (event.player.world.isRemote) {
             return;
         }
-        if (tick != 20) {
-            tick++;
+        String playerName = event.player.getName().toString();
+
+        // Increment player's timer and proceed once per second (20 tics)
+        playerTicks.putIfAbsent(playerName, new MutableInt(0));
+        MutableInt playerTick = playerTicks.get(playerName);
+        if (playerTick.toInteger() != 20) {
+            playerTick.increment();
             return;
         }
-        tick = 0;
-        Vector3d currentLocation = new Vector3d(event.player.posX,
+        playerTick.setValue(0);
+
+        Vec3d currentLocation = new Vec3d(event.player.posX,
                 event.player.posY + event.player.getYOffset(),
                 event.player.posZ);
 
+        playerLastLocations.putIfAbsent(playerName, currentLocation);
+        playerLastLocations.get(playerName);
 
-        if (!playerLastLocations.containsKey(event.player)) {
-            playerLastLocations.put(event.player, currentLocation);
-        }
-        playerLastLocations.get(event.player);
-
-        Vector3d difference = new Vector3d(currentLocation);
-        difference.sub(playerLastLocations.get(event.player));
-        if (difference.length() >= 1) {
-            PlayerMovedEvent movedEvent = new PlayerMovedEvent(event.player, playerLastLocations.get(event.player), currentLocation);
+        Vec3d movementVector = currentLocation.subtract(playerLastLocations.get(playerName));
+        if (movementVector.length() >= 1) {
+            PlayerMovedEvent movedEvent = new PlayerMovedEvent(event.player,
+                    playerLastLocations.get(playerName),
+                    currentLocation);
             MinecraftForge.EVENT_BUS.post(movedEvent);
 
-            playerLastLocations.put(event.player, currentLocation);
+            playerLastLocations.put(playerName, currentLocation);
         }
     }
 }
