@@ -26,13 +26,15 @@ public class BlockGroup {
     private World world;
     private int occupants;
     private int regenTimeout = 100;
+    private BlockGroupContainer parent;
 
     /**
      * Constructor.
      *
      * @param block this is a SavedBlockState that has World, BlockPos, and BlockState as arguments
      */
-    public BlockGroup(SavedBlockState block) {
+    public BlockGroup(SavedBlockState block, BlockGroupContainer parent) {
+        this.parent = parent;
         this.world = block.getWorld(); // Although other blocks are added later, shouldn't ever be jumping worlds.
         this.zone = new BlockGroupZone(new HashSet<BlockPos>(blockStateList.keySet()),
                 block.getWorld(),
@@ -45,8 +47,10 @@ public class BlockGroup {
      * @return "this," to be explicit which group is being kept.
      */
     public BlockGroup joinGroup(BlockGroup group) {
-        // TODO probably remove this
+        // TODO possibly move logic here to parent
         this.blockStateList.putAll(group.blockStateList); // Explicit "this" for clarity's sake.
+        this.blockNeighbors.addAll(group.blockNeighbors);
+        // TODO adding occupants? Any other things needing to be joined?
         group.blockStateList.forEach((pos, savedState) -> zone.addBlock(pos));  // Add the blocks to the zone.
         return this;
     }
