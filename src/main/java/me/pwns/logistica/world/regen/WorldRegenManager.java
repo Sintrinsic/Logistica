@@ -8,11 +8,11 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * TODO complete javadoc
- * TODO Add blockgroup joining. Currently creating a bunch of isolated groups.
  */
 @Mod.EventBusSubscriber
 public class WorldRegenManager {
@@ -30,73 +30,79 @@ public class WorldRegenManager {
 
         SavedBlockState block = new SavedBlockState(world, event.getState(), event.getPos());
         BlockGroupContainer neighborContainer = null;
+        BlockPos[] neighbors = getNeighbors(block);
 
         // TODO does it make sense to move retrieving neighbors to SavedBlockState?
-        BlockPos[] neighbors = {
-                event.getPos().up(),
-                event.getPos().down(),
-                event.getPos().north(),
-                event.getPos().east(),
-                event.getPos().south(),
-                event.getPos().west()
+        // Get all the neighbors and stick it in a hash with the containers
+        HashMap<BlockPos, BlockGroupContainer> neighborContainers = new HashMap<>();
+        for(BlockPos n: neighbors) {
+            neighborContainers.put(n, null);
+        }
+
+        // First, we check if any neighbor exists already in the destroyedBlockGroup.
+        for (Map.Entry<BlockPos, BlockGroupContainer> entry: neighborContainers.entrySet()) {
+            if (destroyedBlockGroup.containsKey(entry.getKey()) && neighborContainer == null ) {
+                System.out.println("Neighbor detected");
+                neighborContainer = destroyedBlockGroup.get(entry.getKey());
+            }
+        }
+        // Have to do this after, otherwise the previous for loop will miss setting the container
+        if (neighborContainer != null) {
+            for (Map.Entry<BlockPos, BlockGroupContainer> entry: neighborContainers.entrySet()){
+                neighborContainers.put(entry.getKey(), neighborContainer);
+            }
+        }
+
+        BlockGroupContainer blockGroupContainer = null;
+
+        // CONDITION 1: Neither destroyed blocks or its neighbors are in the destroyedblocks list (DEFAULT)
+        if (!destroyedBlockGroup.containsKey(block.getPos()) && neighborContainer == null) {
+            blockGroupContainer = new BlockGroupContainer(block);
+            System.out.println("Block and neighbors are all new. Making new container");
+        }
+
+        // CONDITION 2: Destroyed block isn't in the list, but at least one of its neighbors is (ADDBLOCK TO NEIGHBOR)
+        else if (!destroyedBlockGroup.containsKey(block.getPos()) && neighborContainer != null) {
+            System.out.println("Block is new, but neighbors aren't. Adding to existing container");
+            blockGroupContainer = neighborContainer;
+        }
+        // CONDITION 3: Destroyed block is on the list, but none of its neighbors are (ADDBLOCK TO EXISTING)
+        else if (destroyedBlockGroup.containsKey(block.getPos()) && neighborContainer == null) {
+            System.out.println("Block isn't new, but neighbors are. Adding to existing container.");
+            blockGroupContainer = destroyedBlockGroup.get(block.getPos());
+        }
+
+        // CONDITION 4: Destroyed block is on the list, and at least one of its neighbors are (JOIN GROUPS)
+        else if (destroyedBlockGroup.containsKey(block.getPos()) && neighborContainer != null) {
+            System.out.println("Block exists in a container and so do neighbors. Joining groups");
+            blockGroupContainer = destroyedBlockGroup.get(block.getPos());
+            blockGroupContainer.joinGroup(neighborContainer.getChildGroup());
+
+        }
+
+        // Done outside of conditionals to reduce duplicated code.
+        blockGroupContainer.addBlock(block);
+        destroyedBlockGroup.put(block.getPos(), blockGroupContainer);
+        for (BlockPos neighbor : neighbors) {
+            destroyedBlockGroup.put(neighbor, blockGroupContainer);
         };
 
-        // First, we check if any neighbor exists already in the hashmap.
-        for (BlockPos neighbor: neighbors) {
-            if (destroyedBlockGroup.containsKey(neighbor)) {
-                neighborContainer = destroyedBlockGroup.get(neighbor);
-                break; // If this is built right, there should be no need to check further, hence the break.
-            }
-        }
-
-        // TODO find a way to make this if/else simplified. Switch possible?
-        // Next, check to see if the newly changed block is in the hashmap
-        if (destroyedBlockGroup.containsKey(event.getPos())) {
-            // We need the container that's there regardless of what we're doing
-            BlockGroupContainer blockContainer = destroyedBlockGroup.get(event.getPos());
-
-            // Now we see if neighborContainer has been set, do the join if it has
-            if (neighborContainer != null) {
-                blockContainer.joinGroup(neighborContainer.getChildGroup());
-                // TODO update hashmap, possibly through list > hashmap change for the neighbors
-            }
-            // If it hasn't been set, simply addBlock. Note, the container simply calls addBlock on child BlockGroup.
-            else {
-                blockContainer.addBlock(block);
-            }
-        }
-
-        // If the new block isn't in the hashmap...
-        else {
-
-            // Check if the neighborContainer is null, if it isn't then add
-            if (neighborContainer != null) {
-                neighborContainer.addBlock(block);
-                destroyedBlockGroup.put(event.getPos(), neighborContainer);
-            }
-            // Otherwise, block is new, none of the neighbors exist
-            else {
-                BlockGroupContainer newContainer = new BlockGroupContainer(block);
-                destroyedBlockGroup.put(event.getPos(), newContainer);
-                // TODO if we have a method to get the neighbors this should be less tedious.
-                destroyedBlockGroup.put(event.getPos().up(), newContainer);
-                destroyedBlockGroup.put(event.getPos().down(), newContainer);
-                destroyedBlockGroup.put(event.getPos().north(), newContainer);
-                destroyedBlockGroup.put(event.getPos().east(), newContainer);
-                destroyedBlockGroup.put(event.getPos().south(), newContainer);
-                destroyedBlockGroup.put(event.getPos().west(), newContainer);
-            }
-        }
-    }
-
-    private static void blockRemovedLogic(){
-        // TODO move most of the logic for destroyed block listener here, duplicate listener for other modded blockstates
-        // TODO ...or see if there's another event accounting for both breaking and creating?
-        // TODO also, name this something not dumb if kept
     }
 
     public static void removeBlocks(Set<BlockPos> savedBlocks) {
         destroyedBlockGroup.keySet().removeAll(savedBlocks);
+    }
+
+    private static BlockPos[] getNeighbors (SavedBlockState blockState) {
+        System.out.println("Getting block neighbors");
+        return new BlockPos[]{
+                blockState.getPos().north(),
+                blockState.getPos().east(),
+                blockState.getPos().south(),
+                blockState.getPos().west(),
+                blockState.getPos().up(),
+                blockState.getPos().down()
+        };
     }
 
 }
