@@ -39,7 +39,6 @@ public class BlockGroupContainer {
     }
 
     public void restore() {
-        // TODO this is where it's broke, fix it
         this.childGroup.restore();
     }
 
