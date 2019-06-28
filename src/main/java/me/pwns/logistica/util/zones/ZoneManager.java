@@ -50,4 +50,8 @@ public class ZoneManager {
         zones.add(zone);
     }
 
+    public static void removeZone(Zone zone) {
+        zones.remove(zone);
+    }
+
 }

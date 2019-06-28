@@ -1,16 +1,20 @@
 package me.pwns.logistica.util.time.callbacks;
 
 import me.pwns.logistica.world.regen.BlockGroup;
+import me.pwns.logistica.world.regen.BlockGroupContainer;
 
 public class BlockRegenCallback implements CallbackContainer {
-    private BlockGroup target;
+    private BlockGroupContainer target;
 
-    public BlockRegenCallback(BlockGroup target) {
+    public BlockRegenCallback(BlockGroupContainer target) {
         this.target = target;
     }
 
     @Override
     public void doCallback() {
-        target.restore();
+        // TODO causes exception when not checking for null childgroup; better way to handle this?
+        if (target.getChildGroup() != null) {
+            target.restore();
+        }
     }
 }
