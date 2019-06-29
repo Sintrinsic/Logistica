@@ -53,7 +53,7 @@ public class WorldRegenManager {
             System.out.println("Parent is still null. Creating a new BlockGroup and adding it.");
             parentContainer = new BlockGroupContainer();
             BlockGroup destroyedBlockGroup = new BlockGroup(destroyedBlock, parentContainer);
-            parentContainer.setChildGroup(destroyedBlockGroup);
+            //parentContainer.setChildGroup(destroyedBlockGroup);
 
         }
         else {

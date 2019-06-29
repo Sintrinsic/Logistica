@@ -5,10 +5,13 @@ import me.pwns.logistica.events.PlayerExitZoneEvent;
 import me.pwns.logistica.util.time.Scheduler;
 import me.pwns.logistica.util.time.callbacks.BlockRegenCallback;
 import me.pwns.logistica.util.zones.BlockGroupZone;
+import me.pwns.logistica.util.zones.Zone;
 import me.pwns.logistica.util.zones.ZoneManager;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +21,7 @@ import java.util.Set;
  * Groups together adjacent blocks by their current BlockState (see SavedBlockState, in order to  facilitate replacing a
  * specific BlockPos with the previous BlockState
  */
+
 public class BlockGroup {
     private HashMap<BlockPos, SavedBlockState> blockStateList = new HashMap<>();
     private HashSet<BlockPos> blockNeighbors = new HashSet<>();
@@ -33,14 +37,14 @@ public class BlockGroup {
      * Constructor.
      *
      * @param block this is a SavedBlockState that has World, BlockPos, and BlockState as arguments
-     */
+
     public BlockGroup(SavedBlockState block) {
         this.world = block.getWorld(); // Although other blocks are added later, shouldn't ever be jumping worlds.
         this.zone = new BlockGroupZone(new HashSet<BlockPos>(blockStateList.keySet()),
                 block.getWorld(),
                 block.getState().toString());
         addBlock(block);
-    }
+    }*/
 
     public BlockGroup(SavedBlockState block, BlockGroupContainer parent) {
         this.world = block.getWorld(); // Although other blocks are added later, shouldn't ever be jumping worlds.
@@ -48,8 +52,9 @@ public class BlockGroup {
                 block.getWorld(),
                 block.getState().toString());
         this.parent = parent;
+        this.parent.setChildGroup(this);
         addBlock(block);
-
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     public void setParent(BlockGroupContainer parent) {
@@ -67,15 +72,15 @@ public class BlockGroup {
     public BlockGroup joinGroup(BlockGroup group) {
         this.blockStateList.putAll(group.blockStateList); // Explicit "this" for clarity's sake.
         this.blockNeighbors.addAll(group.blockNeighbors);
+        this.blockStateList.forEach((pos, stat) -> this.zone.addBlock(pos));
         // TODO change occupants to playerlist rather than count
-        group.blockStateList.forEach((pos, savedState) -> zone.addBlock(pos));  // Add the blocks to the zone.
         group.getParent().setChildGroup(this);
         group.tearDown();
         touch();
         return this;
     }
 
-    private void touch() {
+    public void touch() {
         lastTouched = ((int) world.getGameTime());
         // Only scheduling the regen if nobody is inside zone. This will prevent huge mining operations from creating
         //thousands of events
@@ -101,6 +106,7 @@ public class BlockGroup {
         touch();
     }
 
+
     /**
      * Helper method to determine when this BlockGroup last was entered.
      *
@@ -109,6 +115,8 @@ public class BlockGroup {
     public float getLastTouched() {
         return this.lastTouched;
     }
+
+    public Zone getZone() {return this.zone;}
 
     /**
      * Helper method to determine if this BlockGroup currently has a player entity within its zone.
@@ -155,19 +163,21 @@ public class BlockGroup {
 
     @SubscribeEvent
     public void enterZoneListener(PlayerEnterZoneEvent event) {
+        System.out.println("enterZoneListener firing");
         if (this.isOrphan()) return;
         if (event.getPlayer().getEntityWorld().isRemote() || event.getZone() != zone) return;
-            this.touch();
-            occupants++;
+        this.touch();
+        occupants++;
+        System.out.println("enterZoneListener completed");
     }
 
     @SubscribeEvent
     public void exitZoneListener(PlayerExitZoneEvent event) {
-        if (this.isOrphan()) return;
+        System.out.println("exitZoneListener firing");
         if (event.getPlayer().getEntityWorld().isRemote() || event.getZone() != zone) return;
         occupants--;
         this.touch();
-
+        System.out.println("exitZoneListener completed");
     }
 
     public boolean isOrphan() {
@@ -177,4 +187,11 @@ public class BlockGroup {
     public void setOrphan(boolean orphan) {
         this.orphan = orphan;
     }
+
+    public void addOccupant(int numberOccupants) {this.occupants += numberOccupants;}
+
+    public void removeOccupant(int numberOccupants) {this.occupants -= numberOccupants;}
+
+    public int getOccupants(){return this.occupants;}
+
 }
