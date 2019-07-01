@@ -7,6 +7,7 @@ import me.pwns.logistica.util.time.callbacks.BlockRegenCallback;
 import me.pwns.logistica.util.zones.BlockGroupZone;
 import me.pwns.logistica.util.zones.Zone;
 import me.pwns.logistica.util.zones.ZoneManager;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
@@ -28,7 +29,7 @@ public class BlockGroup {
     private int lastTouched;
     private BlockGroupZone zone;
     private World world;
-    private int occupants;
+    private HashSet<PlayerEntity> occupants = new HashSet<>();
     private int regenTimeout = 100;
     private BlockGroupContainer parent;
     private boolean orphan = false; // Don't want to end up attempting to join this if it's already been joined.
@@ -51,7 +52,6 @@ public class BlockGroup {
         this.zone = new BlockGroupZone(new HashSet<BlockPos>(blockStateList.keySet()),
                                         block.getWorld(),
                                         block.getState().toString());
-        System.out.println(zone.getName());
         this.parent = parent;
         this.parent.setChildGroup(this);
         addBlock(block);
@@ -85,7 +85,7 @@ public class BlockGroup {
         lastTouched = ((int) world.getGameTime());
         // Only scheduling the regen if nobody is inside zone. This will prevent huge mining operations from creating
         //thousands of events
-        if (occupants == 0) {
+        if (!isOccupied()) {
             Scheduler.createTimer(new BlockRegenCallback(this.parent), 11);
         }
     }
@@ -125,7 +125,19 @@ public class BlockGroup {
      * @return this.isOccupied
      */
     public boolean isOccupied() {
-        return occupants > 0;
+        return !occupants.isEmpty();
+    }
+
+    public boolean isOccupiedByPlayer(PlayerEntity playerEntity) {
+        return occupants.contains(playerEntity);
+    }
+
+    public void addOccupant(PlayerEntity playerEntity) {
+        occupants.add(playerEntity);
+    }
+
+    public void removeOccupant(PlayerEntity playerEntity) {
+        occupants.remove(playerEntity);
     }
 
     /**
@@ -137,7 +149,7 @@ public class BlockGroup {
         if (this.isOrphan()) return;
         int regentime = lastTouched + regenTimeout;
         int worldTime = (int) world.getGameTime();
-        if (occupants > 0 || worldTime < regentime) {
+        if (isOccupied() || worldTime < regentime) {
             return;
         }
         // First, iterate over the blockStateList, and place the block back in the world.
@@ -165,21 +177,18 @@ public class BlockGroup {
 
     @SubscribeEvent
     public void enterZoneListener(PlayerEnterZoneEvent event) {
-        System.out.println("enterZoneListener firing");
-        if (this.isOrphan()) return;
-        if (event.getPlayer().getEntityWorld().isRemote() || event.getZone() != zone) return;
+        PlayerEntity player = event.getPlayer();
+        if (player.getEntityWorld().isRemote() || event.getZone() != zone) return;
         this.touch();
-        occupants++;
-        System.out.println("enterZoneListener completed");
+        addOccupant(player);
     }
 
     @SubscribeEvent
     public void exitZoneListener(PlayerExitZoneEvent event) {
-        System.out.println("exitZoneListener firing");
-        if (event.getPlayer().getEntityWorld().isRemote() || event.getZone() != zone) return;
-        occupants--;
+        PlayerEntity player = event.getPlayer();
+        if (player.getEntityWorld().isRemote() || event.getZone() != zone) return;
+        removeOccupant(player);
         this.touch();
-        System.out.println("exitZoneListener completed");
     }
 
     public boolean isOrphan() {
