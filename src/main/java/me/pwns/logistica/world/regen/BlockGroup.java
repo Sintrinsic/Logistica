@@ -29,7 +29,7 @@ public class BlockGroup {
     private int lastTouched;
     private BlockGroupZone zone;
     private World world;
-    private HashSet<PlayerEntity> occupants = new HashSet<>();
+    private HashSet<String> occupants = new HashSet<>();
     private int regenTimeout = 100;
     private BlockGroupContainer parent;
     private boolean orphan = false; // Don't want to end up attempting to join this if it's already been joined.
@@ -128,16 +128,17 @@ public class BlockGroup {
         return !occupants.isEmpty();
     }
 
-    public boolean isOccupiedByPlayer(PlayerEntity playerEntity) {
-        return occupants.contains(playerEntity);
+    public boolean isOccupiedByPlayer(String playerNameString) {
+        return occupants.contains(playerNameString);
     }
 
-    public void addOccupant(PlayerEntity playerEntity) {
-        occupants.add(playerEntity);
+    public void addOccupant(String playerNameString) {
+        // TODO do we want to pass in the playerEntity, or the name string itself
+        occupants.add(playerNameString);
     }
 
-    public void removeOccupant(PlayerEntity playerEntity) {
-        occupants.remove(playerEntity);
+    public void removeOccupant(String playerNameString) {
+        occupants.remove(playerNameString);
     }
 
     /**
@@ -180,14 +181,14 @@ public class BlockGroup {
         PlayerEntity player = event.getPlayer();
         if (player.getEntityWorld().isRemote() || event.getZone() != zone) return;
         this.touch();
-        addOccupant(player);
+        addOccupant(player.getName().toString());
     }
 
     @SubscribeEvent
     public void exitZoneListener(PlayerExitZoneEvent event) {
         PlayerEntity player = event.getPlayer();
         if (player.getEntityWorld().isRemote() || event.getZone() != zone) return;
-        removeOccupant(player);
+        removeOccupant(player.getName().toString());
         this.touch();
     }
 
