@@ -1,14 +1,14 @@
 package me.pwns.logistica.world.regen;
 
+import me.pwns.logistica.util.zones.BlockGroupZone;
+import me.pwns.logistica.util.zones.Zone;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 
 /**
  * TODO complete javadoc
@@ -25,7 +25,7 @@ public class WorldRegenManager {
     @SubscribeEvent
     public static void blockDestroyedListener(BlockEvent.BreakEvent event) {
         if (event.getWorld().isRemote()) return;
-        World world = event.getWorld().getWorld(); // TODO: Yes, it's weird. The first one makes it an IWorld. Issue?
+        World world = event.getWorld().getWorld(); // Have to get regular world from iWorld
 
         SavedBlockState destroyedBlock = new SavedBlockState(world, event.getState(), event.getPos());
         BlockGroupContainer parentContainer = null;
@@ -39,18 +39,15 @@ public class WorldRegenManager {
             if (currentContainer != null) {
                 BlockGroup childGroup = currentContainer.getChildGroup();
                 if (parentContainer == null) {
-                    System.out.println("Picked up container, and parent container is null.");
                     parentContainer = currentContainer;
                 }
                 else if (currentContainer != parentContainer && childGroup != null) {
-                    System.out.println("Current and parent containers are different; current has non-null child.");
                     parentContainer.joinGroup(childGroup);
                 }
             }
         }
         // If no containers found on existing containers in previous loop, set it now
         if (parentContainer == null) {
-            System.out.println("Parent is still null. Creating a new BlockGroup and adding it.");
             parentContainer = new BlockGroupContainer();
             BlockGroup destroyedBlockGroup = new BlockGroup(destroyedBlock, parentContainer);
             //parentContainer.setChildGroup(destroyedBlockGroup);

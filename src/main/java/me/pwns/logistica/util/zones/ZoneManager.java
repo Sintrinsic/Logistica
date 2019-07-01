@@ -30,6 +30,7 @@ public class ZoneManager {
         for (Zone zone : zones) {
             boolean fromPosInside = zone.isInside(event.getFromPos(), world);
             boolean toPosInside = zone.isInside(event.getToPos(), world);
+
             // Need to capture both transitions into the zone, or movement in a zone if the player's not already marked
             // as entered (as would be the case if the zone popped up around them).
             if (toPosInside && (!fromPosInside || !zone.getPlayers().contains(event.getEntityPlayer()))) {

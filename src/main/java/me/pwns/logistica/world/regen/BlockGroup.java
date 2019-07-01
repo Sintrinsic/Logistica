@@ -49,8 +49,9 @@ public class BlockGroup {
     public BlockGroup(SavedBlockState block, BlockGroupContainer parent) {
         this.world = block.getWorld(); // Although other blocks are added later, shouldn't ever be jumping worlds.
         this.zone = new BlockGroupZone(new HashSet<BlockPos>(blockStateList.keySet()),
-                block.getWorld(),
-                block.getState().toString());
+                                        block.getWorld(),
+                                        block.getState().toString());
+        System.out.println(zone.getName());
         this.parent = parent;
         this.parent.setChildGroup(this);
         addBlock(block);
@@ -159,6 +160,7 @@ public class BlockGroup {
         if (parent.getChildGroup() == this) {
             this.parent.removeChildGroup();
         }
+        MinecraftForge.EVENT_BUS.unregister(this);
     }
 
     @SubscribeEvent
@@ -187,11 +189,5 @@ public class BlockGroup {
     public void setOrphan(boolean orphan) {
         this.orphan = orphan;
     }
-
-    public void addOccupant(int numberOccupants) {this.occupants += numberOccupants;}
-
-    public void removeOccupant(int numberOccupants) {this.occupants -= numberOccupants;}
-
-    public int getOccupants(){return this.occupants;}
 
 }

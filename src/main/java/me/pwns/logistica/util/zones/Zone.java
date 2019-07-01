@@ -14,10 +14,6 @@ public abstract class Zone {
     protected World world;
     protected String name;
 
-    public Zone () {
-        ZoneManager.addZone(this);
-    }
-
     /**
      * @param position The 3d position in the world to check.
      * @param world    The world that corresponds to the above position.

@@ -25,16 +25,15 @@ public class PlayerMovementManager {
         // Increment player's timer and proceed once per second (20 tics)
         playerTicks.putIfAbsent(playerName, new MutableInt(0));
         MutableInt playerTick = playerTicks.get(playerName);
-        if (playerTick.toInteger() != 20) {
+        if (playerTick.toInteger() != 4) {
             playerTick.increment();
             return;
         }
         playerTick.setValue(0);
 
         Vec3d currentLocation = new Vec3d(event.player.posX,
-                event.player.posY + event.player.getYOffset(),
+                event.player.posY,
                 event.player.posZ);
-
         playerLastLocations.putIfAbsent(playerName, currentLocation);
         playerLastLocations.get(playerName);
 

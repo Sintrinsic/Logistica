@@ -18,13 +18,15 @@ public class BlockGroupZone extends Zone {
         this.name = name;
         blockList = blockSet;
         players = new HashSet<>();
+        ZoneManager.addZone(this);
     }
 
     public boolean isInside(Vec3d position, World world) {
+        // TODO check for both feet and head
         if (world != this.world) {
             return false;
         }
-        BlockPos targetBlock = new BlockPos(position);
+        BlockPos targetBlock = new BlockPos(position.x, position.y, position.z);
         return blockList.contains(targetBlock);
     }
 
