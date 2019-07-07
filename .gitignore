@@ -90,3 +90,4 @@ fabric.properties
 build/
 run/
 src/main/resources/assets/logistica/loot_tables/
+gradlew

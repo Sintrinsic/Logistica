@@ -5,9 +5,14 @@ import me.pwns.logistica.events.PlayerExitZoneEvent;
 import me.pwns.logistica.util.time.Scheduler;
 import me.pwns.logistica.util.time.callbacks.BlockRegenCallback;
 import me.pwns.logistica.util.zones.BlockGroupZone;
+import me.pwns.logistica.util.zones.Zone;
+import me.pwns.logistica.util.zones.ZoneManager;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,27 +22,48 @@ import java.util.Set;
  * Groups together adjacent blocks by their current BlockState (see SavedBlockState, in order to  facilitate replacing a
  * specific BlockPos with the previous BlockState
  */
+
 public class BlockGroup {
     private HashMap<BlockPos, SavedBlockState> blockStateList = new HashMap<>();
-    private HashSet<BlockPos> blockNeighbors = new HashSet<>();  // TODO right collection type?
-    private boolean hasBeenRestored = false;
+    private HashSet<BlockPos> blockNeighbors = new HashSet<>();
     private int lastTouched;
     private BlockGroupZone zone;
     private World world;
-    private int occupants;
+    private HashSet<String> occupants = new HashSet<>();
     private int regenTimeout = 100;
+    private BlockGroupContainer parent;
+    private boolean orphan = false; // Don't want to end up attempting to join this if it's already been joined.
 
     /**
      * Constructor.
      *
      * @param block this is a SavedBlockState that has World, BlockPos, and BlockState as arguments
-     */
+
     public BlockGroup(SavedBlockState block) {
         this.world = block.getWorld(); // Although other blocks are added later, shouldn't ever be jumping worlds.
         this.zone = new BlockGroupZone(new HashSet<BlockPos>(blockStateList.keySet()),
                 block.getWorld(),
                 block.getState().toString());
         addBlock(block);
+    }*/
+
+    public BlockGroup(SavedBlockState block, BlockGroupContainer parent) {
+        this.world = block.getWorld(); // Although other blocks are added later, shouldn't ever be jumping worlds.
+        this.zone = new BlockGroupZone(new HashSet<BlockPos>(blockStateList.keySet()),
+                                        block.getWorld(),
+                                        block.getState().toString());
+        this.parent = parent;
+        this.parent.setChildGroup(this);
+        addBlock(block);
+        MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    public void setParent(BlockGroupContainer parent) {
+        this.parent = parent;
+    }
+
+    public BlockGroupContainer getParent() {
+        return parent;
     }
 
     /**
@@ -45,18 +71,22 @@ public class BlockGroup {
      * @return "this," to be explicit which group is being kept.
      */
     public BlockGroup joinGroup(BlockGroup group) {
-        // TODO probably remove this
         this.blockStateList.putAll(group.blockStateList); // Explicit "this" for clarity's sake.
-        group.blockStateList.forEach((pos, savedState) -> zone.addBlock(pos));  // Add the blocks to the zone.
+        this.blockNeighbors.addAll(group.blockNeighbors);
+        this.blockStateList.forEach((pos, stat) -> this.zone.addBlock(pos));
+        // TODO change occupants to playerlist rather than count
+        group.getParent().setChildGroup(this);
+        group.tearDown();
+        touch();
         return this;
     }
 
-    private void touch() {
+    public void touch() {
         lastTouched = ((int) world.getGameTime());
         // Only scheduling the regen if nobody is inside zone. This will prevent huge mining operations from creating
         //thousands of events
-        if (occupants == 0) {
-            Scheduler.createTimer(new BlockRegenCallback(this), 11);
+        if (!isOccupied()) {
+            Scheduler.createTimer(new BlockRegenCallback(this.parent), 11);
         }
     }
 
@@ -77,6 +107,7 @@ public class BlockGroup {
         touch();
     }
 
+
     /**
      * Helper method to determine when this BlockGroup last was entered.
      *
@@ -86,13 +117,28 @@ public class BlockGroup {
         return this.lastTouched;
     }
 
+    public Zone getZone() {return this.zone;}
+
     /**
      * Helper method to determine if this BlockGroup currently has a player entity within its zone.
      *
      * @return this.isOccupied
      */
     public boolean isOccupied() {
-        return occupants > 0;
+        return !occupants.isEmpty();
+    }
+
+    public boolean isOccupiedByPlayer(String playerNameString) {
+        return occupants.contains(playerNameString);
+    }
+
+    public void addOccupant(String playerNameString) {
+        // TODO do we want to pass in the playerEntity, or the name string itself
+        occupants.add(playerNameString);
+    }
+
+    public void removeOccupant(String playerNameString) {
+        occupants.remove(playerNameString);
     }
 
     /**
@@ -101,35 +147,57 @@ public class BlockGroup {
      */
     public void restore() {
         // preventing regen if the timeout hasn't been hit. Will happen often with scheduler.
+        if (this.isOrphan()) return;
         int regentime = lastTouched + regenTimeout;
         int worldTime = (int) world.getGameTime();
-        if (occupants > 0 || worldTime < regentime) {
+        if (isOccupied() || worldTime < regentime) {
             return;
         }
         // First, iterate over the blockStateList, and place the block back in the world.
         blockStateList.forEach((pos, state) -> state.restoreState());
-        hasBeenRestored = true; // Currently not used, included for future proofing.
 
         // Now we need to clean up WorldRegenManager of both restored blocks and their neighbors.
         Set<BlockPos> allBlockPos = new HashSet<>();
         allBlockPos.addAll(blockStateList.keySet());
         allBlockPos.addAll(blockNeighbors);
-
         WorldRegenManager.removeBlocks(allBlockPos);
+        tearDown();
+    }
+
+    /**
+     * Teardown method invoked both from group join and from
+     */
+    public void tearDown() {
+        this.setOrphan(true);
+        ZoneManager.removeZone(this.zone);
+        if (parent.getChildGroup() == this) {
+            this.parent.removeChildGroup();
+        }
+        MinecraftForge.EVENT_BUS.unregister(this);
     }
 
     @SubscribeEvent
     public void enterZoneListener(PlayerEnterZoneEvent event) {
-        if (event.getPlayer().getEntityWorld().isRemote() || event.getZone() != zone) return;
-            this.touch();
-            occupants++;
+        PlayerEntity player = event.getPlayer();
+        if (player.getEntityWorld().isRemote() || event.getZone() != zone) return;
+        this.touch();
+        addOccupant(player.getName().toString());
     }
 
     @SubscribeEvent
     public void exitZoneListener(PlayerExitZoneEvent event) {
-        if (event.getPlayer().getEntityWorld().isRemote() || event.getZone() != zone) return;
-        occupants--;
+        PlayerEntity player = event.getPlayer();
+        if (player.getEntityWorld().isRemote() || event.getZone() != zone) return;
+        removeOccupant(player.getName().toString());
         this.touch();
-
     }
+
+    public boolean isOrphan() {
+        return orphan;
+    }
+
+    public void setOrphan(boolean orphan) {
+        this.orphan = orphan;
+    }
+
 }
